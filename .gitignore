@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Mafia Bot users & roles
+users.json
+roles.json
+
+# Mafia bot settings
+settings.ini
+
+# Mafia bot images
+images/
