@@ -56,13 +56,12 @@ class UserManager:
 
 
 class Role:
-    __attrs = ["name", "image", "channel_id", "amount"]
+    __attrs = ["name", "image", "amount"]
 
     def __init__(self, name: str, image: Union[None, str] = None,
-                 channel_id: Union[None, int] = None, amount: int = 0):
+                 amount: int = 0):
         self.name = name
         self.image = image
-        self.channel_id = channel_id
         self.amount = amount
     
     def save(self):
