@@ -6,13 +6,16 @@ from discord.ext import commands
 
 
 class User:
-    def __init__(self, user: discord.User = None, data=None):
+    __attrs = ["id", "name"]
+    def __init__(self, user: discord.Member = None, data=None):
         if data is not None:
-            self.name = data["name"]
-            self.id = data["id"]
+            for i in self.__attrs:
+                setattr(self, i, data[i])
+            self.user = None
             return
-        self.name = user.name
+        self.name = user.nick
         self.id = user.id
+        self.user = user
 
     @property
     def mention_name(self):
@@ -26,10 +29,9 @@ class User:
 
 
 class UserManager:
-    def __init__(self, filename: str, bot: commands.Bot):
+    def __init__(self, filename: str):
         self.filename = filename
         self.data: Dict[int, User] = {}
-        self.bot = bot
 
         if os.path.isfile(filename):
             with open(filename, "r") as f:
@@ -41,6 +43,11 @@ class UserManager:
         with open(self.filename, "w") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
+    def getUser(self, user_id: int) -> User:
+        if user_id in self.data:
+            return self.data[user_id]
+        return None
+
     def removeUser(self, user_id: int):
         if user_id in self.data:
             del self.data[user_id]
@@ -50,18 +57,22 @@ class UserManager:
 
     def listUsers(self) -> List[User]:
         return list(self.data.values())
+    
+    def setRole(self, user_id: int, role) -> None:
+        self.data[user_id].role = role
 
     def __contains__(self, value):
         return value in self.data
 
 
 class Role:
-    __attrs = ["name", "image", "amount"]
+    __attrs = ["name", "image", "channel_id", "amount"]
 
     def __init__(self, name: str, image: Union[None, str] = None,
-                 amount: int = 0):
+                 channel_id: Union[None, int] = None, amount: int = 0):
         self.name = name
         self.image = image
+        self.channel_id = channel_id
         self.amount = amount
     
     def save(self):
@@ -93,6 +104,7 @@ class RoleManager:
             del self.data[role_name]
     
     def listGenRoles(self) -> List[Role]:
+        """Return a list of roles where `amount` > 0"""
         return [i for i in self.data.values() if i.amount > 0]
     
     def getRole(self, role_name) -> Role:

@@ -8,13 +8,10 @@ from discord import utils
 from discord.ext import commands
 
 import manager
-from properties import Properties
 
-
-properties = Properties("bot.properties")
-TOKEN: str = properties.token
-GUILD: str = properties.guild
-ADMINROLES: List[str] = properties.adminroles.split(" ")
+TOKEN: str = os.environ.get("bot-token")
+GUILD: str = os.environ.get("guild-name")
+ADMINROLES: List[str] = os.environ.get("admin-roles")
 
 intent: discord.Intents = discord.Intents.default()
 intent.members = True
@@ -36,11 +33,6 @@ def is_admin(author: discord.Member) -> bool:
 
 @bot.event
 async def on_ready():
-    if not os.path.isdir("images"):
-        os.mkdir("images")
-        print("Создана папка images для хранения изображений.")
-    open("roles.json", "a").close()
-    open("users.json", "a").close()
     guild: discord.Guild = utils.get(bot.guilds, name=GUILD)
     admins = utils.get(utils.get(bot.guilds, name=GUILD).roles, name="ведущий").members
     if not admins:
@@ -49,7 +41,7 @@ async def on_ready():
     else:
         global ADMIN
         ADMIN = admins[0]
-    print("Подключен к серверу...")
+    print("Connected to the guild...")
 
 
 @bot.event
@@ -190,6 +182,17 @@ class RolesCategory(commands.Cog, name="Роли"):
         roles.getRole(name).amount = int(amount)
         roles.save()
         await ctx.send("Количество успешно изменено")
+
+    @commands.command(name="place")
+    @commands.has_role("ведущий")
+    async def set_channel(self, ctx: commands.Context, name: str):
+        """Задает текстовый канал, где общаются игроки с указанной ролью"""
+        if name not in roles:
+            await ctx.send("Роли с таким именем не существует")
+        channel_id: int = ctx.message.channel.id
+        roles.getRole(name).channel_id = channel_id
+        roles.save()
+        await ctx.send(f"Канал роли изменен на <#{channel_id}>")
 
     @commands.command(name="roles")
     async def list_roles(self, ctx: commands.Context):
